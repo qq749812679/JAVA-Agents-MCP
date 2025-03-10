@@ -1,0 +1,110 @@
+# 企业级AI多Agent系统配置文件
+
+server:
+  port: 8080
+  servlet:
+    context-path: /enterprise-ai
+  
+spring:
+  application:
+    name: enterprise-ai
+  
+  # Kafka消息队列配置
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: enterprise-ai-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.enterprise.ai.*
+  
+  # Elasticsearch配置 (向量数据库)
+  elasticsearch:
+    rest:
+      uris: http://localhost:9200
+      username: elastic
+      password: changeme
+  
+  # Redis配置 (分布式缓存)
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    timeout: 60000
+
+# MCP协议配置
+mcp:
+  controller:
+    task-retention-days: 7
+    max-active-tasks: 100
+  
+  message-bus:
+    queue-size: 1000
+    workers: 5
+    topics:
+      system: mcp-system
+      task: mcp-task
+      agent: mcp-agent
+
+# RAG系统配置
+rag:
+  vector-store:
+    type: elasticsearch  # 可选值: elasticsearch, weaviate, milvus
+    index-name: enterprise-knowledge
+    dimensions: 1536
+  
+  embeddings:
+    model: openai  # 可选值: openai, huggingface, sbert
+    api-key: ${OPENAI_API_KEY}
+    model-name: text-embedding-ada-002
+  
+  document-processor:
+    chunk-size: 1000
+    chunk-overlap: 200
+    
+# LLM服务配置
+llm:
+  provider: openai  # 可选值: openai, azure, huggingface
+  api-key: ${OPENAI_API_KEY}
+  model: gpt-3.5-turbo
+  temperature: 0.0
+  max-tokens: 4000
+  timeout: 30000
+
+# Agent配置
+agents:
+  text-agent:
+    name: TextProcessor
+    capabilities: [TEXT_PROCESSING, REASONING]
+    rag-k: 5
+    use-hybrid-search: true
+    
+  vision-agent:
+    name: VisionProcessor
+    capabilities: [IMAGE_PROCESSING, REASONING]
+    
+  expert-agent:
+    name: DomainExpert
+    capabilities: [CODE_GENERATION, DATA_ANALYSIS, REASONING]
+    
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.enterprise.ai: DEBUG
+    org.springframework: INFO
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always 
